@@ -1,0 +1,111 @@
+name: Futmondo - analisis 08 y 22
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 8 * * *'
+      timezone: 'Europe/Madrid'
+    - cron: '7 22 * * *'
+      timezone: 'Europe/Madrid'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: futmondo-full-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scheduler
+        uses: actions/checkout@v4
+
+      - name: Comprobar configuracion
+        id: config
+        shell: bash
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          FUTMONDO_EMAIL: ${{ secrets.FUTMONDO_EMAIL }}
+          FUTMONDO_PASSWORD: ${{ secrets.FUTMONDO_PASSWORD }}
+          FUTMONDO_CHAMPIONSHIP_ID: ${{ vars.FUTMONDO_CHAMPIONSHIP_ID }}
+          FUTMONDO_USERTEAM_ID: ${{ vars.FUTMONDO_USERTEAM_ID }}
+        run: |
+          missing=0
+          for name in PRIVATE_REPO_TOKEN FUTMONDO_EMAIL FUTMONDO_PASSWORD FUTMONDO_CHAMPIONSHIP_ID FUTMONDO_USERTEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::warning::Falta configurar $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 0 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repo privado
+        if: steps.config.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: cllorentejaime-sys/futmondo-reader-cloud
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: private
+
+      - name: Preparar Python
+        if: steps.config.outputs.ready == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias
+        if: steps.config.outputs.ready == 'true'
+        run: pip install -r private/requirements.txt
+
+      - name: Preparar runtime
+        if: steps.config.outputs.ready == 'true'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/futmondo-data/salida"
+          cp private/data/futmondo_resumen_ULTIMO.json "$RUNNER_TEMP/futmondo-data/salida/futmondo_resumen_ULTIMO.json" || true
+
+      - name: Actualizar Futmondo y publicar JSON
+        if: steps.config.outputs.ready == 'true'
+        working-directory: private
+        env:
+          FUTMONDO_DATA_DIR: ${{ runner.temp }}/futmondo-data
+          FUTMONDO_EMAIL: ${{ secrets.FUTMONDO_EMAIL }}
+          FUTMONDO_PASSWORD: ${{ secrets.FUTMONDO_PASSWORD }}
+          FUTMONDO_CHAMPIONSHIP_ID: ${{ vars.FUTMONDO_CHAMPIONSHIP_ID }}
+          FUTMONDO_USERTEAM_ID: ${{ vars.FUTMONDO_USERTEAM_ID }}
+          CLOUD_TIMEZONE: Europe/Madrid
+          GITHUB_SYNC_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          GITHUB_SYNC_REPO: cllorentejaime-sys/futmondo-reader-cloud
+          GITHUB_SYNC_BRANCH: main
+          GITHUB_SYNC_PATH: data/futmondo_resumen_ULTIMO.json
+        run: |
+          python unpack_cloud.py
+          python cloud_runner.py --force
+          python publish_to_github.py
+
+      - name: Calcular proxima renovacion
+        if: steps.config.outputs.ready == 'true'
+        env:
+          SUMMARY_PATH: ${{ runner.temp }}/futmondo-data/salida/futmondo_resumen_ULTIMO.json
+        run: python scheduler/update_renew_schedule.py
+
+      - name: Guardar programacion
+        if: steps.config.outputs.ready == 'true'
+        shell: bash
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > scheduler/heartbeat.txt
+          git config user.name "futmondo-scheduler"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/workflows/renew.yml scheduler/next_renewal.json scheduler/heartbeat.txt
+          if git diff --cached --quiet; then
+            echo "Sin cambios de programacion."
+          else
+            git commit -m "scheduler: actualizar proxima renovacion"
+            git push
+          fi
