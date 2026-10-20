@@ -1,5 +1,35 @@
 {
-  "actualizado_local": null,
-  "bloqueos": [],
-  "proxima_renovacion": null
+  "actualizado_local": "2026-10-20T22:13:13.099519+02:00",
+  "bloqueos": [
+    {
+      "id": "520243d0d7a595bd3700001f",
+      "jugador": "Oblak",
+      "posicion": "portero",
+      "vence_local": "2026-10-22T12:08:07.471000+02:00"
+    },
+    {
+      "id": "61122ac42806395bcad477f0",
+      "jugador": "Brugué",
+      "posicion": "delantero",
+      "vence_local": "2026-10-22T12:10:03.047000+02:00"
+    },
+    {
+      "id": "50f47dd1dbbab36d0e0042e3",
+      "jugador": "Jonny",
+      "posicion": "defensa",
+      "vence_local": "2026-10-22T12:24:34.088000+02:00"
+    },
+    {
+      "id": "5f36db010b759303ff680104",
+      "jugador": "Iván Martín",
+      "posicion": "centrocampista",
+      "vence_local": "2026-10-25T11:25:58.212000+01:00"
+    }
+  ],
+  "proxima_renovacion": {
+    "jugador": "Oblak",
+    "vence_local": "2026-10-22T12:08:07.471000+02:00",
+    "despertar_principal_local": "2026-10-22T11:08:07.471000+02:00",
+    "respaldo_local": "2026-10-22T11:48:07.471000+02:00"
+  }
 }
