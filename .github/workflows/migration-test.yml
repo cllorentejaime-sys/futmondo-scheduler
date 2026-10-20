@@ -1,0 +1,86 @@
+name: Futmondo - prueba migracion
+
+on:
+  push:
+    paths:
+      - 'scheduler/test-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scheduler
+        uses: actions/checkout@v4
+
+      - name: Validar secrets y variables
+        id: cfg
+        shell: bash
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          FUTMONDO_EMAIL: ${{ secrets.FUTMONDO_EMAIL }}
+          FUTMONDO_PASSWORD: ${{ secrets.FUTMONDO_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FUTMONDO_CHAMPIONSHIP_ID: ${{ vars.FUTMONDO_CHAMPIONSHIP_ID }}
+          FUTMONDO_USERTEAM_ID: ${{ vars.FUTMONDO_USERTEAM_ID }}
+        run: |
+          missing=0
+          for name in PRIVATE_REPO_TOKEN FUTMONDO_EMAIL FUTMONDO_PASSWORD TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID FUTMONDO_CHAMPIONSHIP_ID FUTMONDO_USERTEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Falta configurar $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout privado
+        uses: actions/checkout@v4
+        with:
+          repository: cllorentejaime-sys/futmondo-reader-cloud
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: private
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias
+        run: pip install -r private/requirements.txt
+
+      - name: Preparar runtime
+        run: |
+          mkdir -p "$RUNNER_TEMP/futmondo-data/salida"
+          cp private/data/futmondo_resumen_ULTIMO.json "$RUNNER_TEMP/futmondo-data/salida/futmondo_resumen_ULTIMO.json" || true
+
+      - name: Refresco completo Futmondo
+        working-directory: private
+        env:
+          FUTMONDO_DATA_DIR: ${{ runner.temp }}/futmondo-data
+          FUTMONDO_EMAIL: ${{ secrets.FUTMONDO_EMAIL }}
+          FUTMONDO_PASSWORD: ${{ secrets.FUTMONDO_PASSWORD }}
+          FUTMONDO_CHAMPIONSHIP_ID: ${{ vars.FUTMONDO_CHAMPIONSHIP_ID }}
+          FUTMONDO_USERTEAM_ID: ${{ vars.FUTMONDO_USERTEAM_ID }}
+          CLOUD_TIMEZONE: Europe/Madrid
+          GITHUB_SYNC_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          GITHUB_SYNC_REPO: cllorentejaime-sys/futmondo-reader-cloud
+          GITHUB_SYNC_BRANCH: main
+          GITHUB_SYNC_PATH: data/futmondo_resumen_ULTIMO.json
+        run: |
+          python unpack_cloud.py
+          python cloud_runner.py --force
+          python publish_to_github.py
+
+      - name: Recalcular renovacion
+        env:
+          SUMMARY_PATH: ${{ runner.temp }}/futmondo-data/salida/futmondo_resumen_ULTIMO.json
+        run: python scheduler/update_renew_schedule.py
+
+      - name: Mostrar programacion calculada
+        run: cat scheduler/next_renewal.json
