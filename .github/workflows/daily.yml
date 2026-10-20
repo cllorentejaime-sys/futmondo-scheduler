@@ -2,6 +2,9 @@ name: Futmondo - analisis 08 y 22
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'scheduler/daily-test-trigger.txt'
   schedule:
     - cron: '7 8 * * *'
       timezone: 'Europe/Madrid'
