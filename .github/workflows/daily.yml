@@ -3,10 +3,12 @@ name: Futmondo - analisis 08 y 22
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7 8 * * *'
-      timezone: 'Europe/Madrid'
-    - cron: '7 22 * * *'
-      timezone: 'Europe/Madrid'
+    # GitHub cron se evalúa en UTC. Lanzamos las dos horas UTC posibles
+    # de España (CET/CEST) y un guard local decide cuál corresponde hoy.
+    - cron: '7 6 * * *'
+    - cron: '7 7 * * *'
+    - cron: '7 20 * * *'
+    - cron: '7 21 * * *'
 
 permissions:
   contents: write
@@ -19,10 +21,42 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
+      - name: Validar hora Europe/Madrid
+        id: clock
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import datetime, timezone
+          from zoneinfo import ZoneInfo
+
+          if os.environ.get("EVENT_NAME") == "workflow_dispatch":
+              run = True
+          else:
+              schedule = os.environ.get("EVENT_SCHEDULE", "")
+              parts = schedule.split()
+              run = False
+              if len(parts) >= 2:
+                  minute = int(parts[0])
+                  hour = int(parts[1])
+                  now = datetime.now(timezone.utc)
+                  scheduled = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                  local = scheduled.astimezone(ZoneInfo("Europe/Madrid"))
+                  run = (local.hour, local.minute) in {(8, 7), (22, 7)}
+                  print(f"Horario programado UTC: {scheduled.isoformat()} -> Madrid: {local.isoformat()}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"run={'true' if run else 'false'}\n")
+          PY
+
       - name: Checkout scheduler
+        if: steps.clock.outputs.run == 'true'
         uses: actions/checkout@v4
 
       - name: Comprobar configuracion
+        if: steps.clock.outputs.run == 'true'
         id: config
         shell: bash
         env:
@@ -46,7 +80,7 @@ jobs:
           fi
 
       - name: Checkout repo privado
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         uses: actions/checkout@v4
         with:
           repository: cllorentejaime-sys/futmondo-reader-cloud
@@ -54,24 +88,24 @@ jobs:
           path: private
 
       - name: Preparar Python
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Instalar dependencias
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         run: pip install -r private/requirements.txt
 
       - name: Preparar runtime
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/futmondo-data/salida"
           cp private/data/futmondo_resumen_ULTIMO.json "$RUNNER_TEMP/futmondo-data/salida/futmondo_resumen_ULTIMO.json" || true
 
       - name: Actualizar Futmondo y publicar JSON
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         working-directory: private
         env:
           FUTMONDO_DATA_DIR: ${{ runner.temp }}/futmondo-data
@@ -90,13 +124,13 @@ jobs:
           python publish_to_github.py
 
       - name: Calcular proxima renovacion
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         env:
           SUMMARY_PATH: ${{ runner.temp }}/futmondo-data/salida/futmondo_resumen_ULTIMO.json
         run: python scheduler/update_renew_schedule.py
 
       - name: Guardar programacion
-        if: steps.config.outputs.ready == 'true'
+        if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         shell: bash
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ" > scheduler/heartbeat.txt
