@@ -51,7 +51,10 @@ def locked_players(data: dict) -> list[dict]:
 
 
 def cron_for(dt: datetime) -> str:
-    return f"{dt.minute} {dt.hour} {dt.day} {dt.month} *"
+    # GitHub Actions interpreta cron en UTC. Convertimos siempre la fecha local
+    # calculada (Europe/Madrid) a UTC antes de escribir el schedule.
+    utc = dt.astimezone(ZoneInfo("UTC"))
+    return f"{utc.minute} {utc.hour} {utc.day} {utc.month} *"
 
 
 def main() -> int:
@@ -81,9 +84,9 @@ def main() -> int:
         block = (
             f"{START}\n"
             f"      - cron: '{cron_for(primary)}'\n"
-            f"        timezone: 'Europe/Madrid'\n"
+            f""
             f"      - cron: '{cron_for(backup)}'\n"
-            f"        timezone: 'Europe/Madrid'\n"
+            f""
             f"{END}"
         )
         state_payload["proxima_renovacion"] = {
@@ -96,7 +99,7 @@ def main() -> int:
         block = (
             f"{START}\n"
             "      - cron: '0 0 31 2 *'\n"
-            "        timezone: 'Europe/Madrid'\n"
+            ""
             f"{END}"
         )
 
