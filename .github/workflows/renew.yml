@@ -4,10 +4,8 @@ on:
   workflow_dispatch:
   schedule:
 # DYNAMIC_SCHEDULE_START
-      - cron: '8 11 22 10 *'
-        timezone: 'Europe/Madrid'
-      - cron: '48 11 22 10 *'
-        timezone: 'Europe/Madrid'
+      - cron: '8 9 22 10 *'
+      - cron: '48 9 22 10 *'
 # DYNAMIC_SCHEDULE_END
 
 permissions:
