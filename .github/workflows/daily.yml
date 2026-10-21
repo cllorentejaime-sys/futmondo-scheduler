@@ -2,6 +2,9 @@ name: Futmondo - analisis 08 y 22
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'scheduler/force-refresh.txt'
   schedule:
     # GitHub cron se evalúa en UTC. Lanzamos las dos horas UTC posibles
     # de España (CET/CEST) y un guard local decide cuál corresponde hoy.
