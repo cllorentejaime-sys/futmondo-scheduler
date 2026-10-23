@@ -28,13 +28,21 @@ jobs:
         run: |
           railway link             --project 636bc2d3-b428-4742-876a-b1a9642c84ba             --environment a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3             --service 24bc953e-a219-48c8-a7e8-c86856adcf72             --json
 
+      - name: Registrar clave SSH temporal
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -N "" -f ~/.ssh/railway_ci -C "futmondo-ci-${GITHUB_RUN_ID}"
+          railway ssh keys add --key ~/.ssh/railway_ci.pub --name "futmondo-ci-${GITHUB_RUN_ID}"
+
       - name: Descargar historial del volumen
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: |
           rm -rf railway-historial
-          railway volume files --volume 78e82e33-140d-4546-9b8b-f92032dd1505             download /historial ./railway-historial --overwrite --json
-          find railway-historial -maxdepth 2 -type f -printf '%P\t%s bytes\n' | sort
+          railway volume files --volume 78e82e33-140d-4546-9b8b-f92032dd1505             download /historial ./railway-historial --overwrite
+          find railway-historial -maxdepth 3 -type f -printf '%P\t%s bytes\n' | sort
 
       - name: Guardar estado rescatado
         working-directory: private
