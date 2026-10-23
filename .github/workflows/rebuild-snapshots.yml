@@ -1,0 +1,109 @@
+name: Futmondo - reconstruir snapshots
+
+on:
+  push:
+    paths:
+      - 'scheduler/rebuild-snapshots.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo privado
+        uses: actions/checkout@v4
+        with:
+          repository: cllorentejaime-sys/futmondo-reader-cloud
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: private
+
+      - name: Reconstruir snapshots desde historial Git
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        run: |
+          python - <<'PY'
+          import base64, json, os, urllib.request
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          repo = "cllorentejaime-sys/futmondo-reader-cloud"
+          path = "data/futmondo_resumen_ULTIMO.json"
+          token = os.environ["GH_TOKEN"]
+
+          def api(url):
+              req = urllib.request.Request(url, headers={
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "futmondo-snapshot-rebuilder",
+              })
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  return json.load(r)
+
+          commits = api(f"https://api.github.com/repos/{repo}/commits?path={path}&per_page=100")
+          snapshots = []
+          seen = set()
+
+          for i, commit in enumerate(reversed(commits), 1):
+              sha = commit["sha"]
+              try:
+                  payload = api(f"https://api.github.com/repos/{repo}/contents/{path}?ref={sha}")
+                  raw = base64.b64decode(payload["content"])
+                  data = json.loads(raw)
+              except Exception as exc:
+                  print(f"SKIP {sha[:8]}: {exc}")
+                  continue
+
+              generated = (
+                  (data.get("calendario_operativo") or {}).get("generado_local")
+                  or (data.get("meta") or {}).get("generado_local")
+                  or commit["commit"]["committer"]["date"]
+              )
+              if generated in seen:
+                  continue
+              seen.add(generated)
+
+              mine = data.get("mi_equipo") or {}
+              teams = []
+
+              plantilla = mine.get("plantilla") or []
+              teams.append({
+                  "equipo": mine.get("nombre") or "Rayo Chabacano",
+                  "valor_plantilla": sum(int(p.get("valor") or 0) for p in plantilla),
+                  "puntos_acumulados_jugadores": round(sum(float(p.get("puntos") or 0) for p in plantilla), 3),
+                  "num_jugadores": len(plantilla),
+              })
+
+              for rival in data.get("rivales") or []:
+                  teams.append({
+                      "equipo": rival.get("equipo"),
+                      "valor_plantilla": int(rival.get("valor_plantilla") or 0),
+                      "puntos_acumulados_jugadores": float(rival.get("puntos_acumulados_jugadores") or 0),
+                      "num_jugadores": int(rival.get("num_jugadores") or len(rival.get("plantilla") or [])),
+                  })
+
+              snapshots.append({
+                  "generated_at_utc": generated,
+                  "mi_equipo": mine.get("nombre") or "Rayo Chabacano",
+                  "mi_saldo_real": int(mine.get("saldo_real") or 0),
+                  "mis_puntos_equipo": float(mine.get("puntos") or 0),
+                  "equipos": teams,
+              })
+              print(f"{i}/{len(commits)} {sha[:8]} {generated} equipos={len(teams)}")
+
+          out = Path("private/state/historial/snapshots_economia.json")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(snapshots, ensure_ascii=False, indent=2), encoding="utf-8")
+          print(f"Snapshots reconstruidos: {len(snapshots)}")
+          PY
+
+      - name: Guardar snapshots reconstruidos
+        working-directory: private
+        run: |
+          git config user.name "futmondo-history-rebuild"
+          git config user.email "actions@users.noreply.github.com"
+          git add -f state/historial/snapshots_economia.json
+          git commit -m "state: reconstruir snapshots desde historial Git" || true
+          git push
