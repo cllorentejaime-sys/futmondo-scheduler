@@ -104,8 +104,14 @@ jobs:
         if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/futmondo-data/salida"
+          mkdir -p "$RUNNER_TEMP/futmondo-data/salida" "$RUNNER_TEMP/futmondo-data/historial"
           cp private/data/futmondo_resumen_ULTIMO.json "$RUNNER_TEMP/futmondo-data/salida/futmondo_resumen_ULTIMO.json" || true
+          if [ -d private/state/historial ]; then
+            cp -a private/state/historial/. "$RUNNER_TEMP/futmondo-data/historial/"
+            echo "Estado histórico restaurado."
+          else
+            echo "Sin estado histórico previo; se creará semilla inicial."
+          fi
 
       - name: Actualizar Futmondo y publicar JSON
         if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
@@ -123,7 +129,30 @@ jobs:
           GITHUB_SYNC_PATH: data/futmondo_resumen_ULTIMO.json
         run: |
           python unpack_cloud.py
+          set +e
           python cloud_runner.py --force
+          rc=$?
+          set -e
+
+          mkdir -p state/historial
+          rm -rf state/historial/*
+          cp -a "$FUTMONDO_DATA_DIR/historial/." state/historial/
+
+          git config user.name "futmondo-state"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/historial
+          if ! git diff --cached --quiet; then
+            git commit -m "state: actualizar histórico Futmondo"
+            git push
+          else
+            echo "Estado histórico sin cambios."
+          fi
+
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::El lector terminó con control de calidad no OK; estado persistido para la próxima ejecución."
+            exit "$rc"
+          fi
+
           python publish_to_github.py
 
       - name: Calcular proxima renovacion
