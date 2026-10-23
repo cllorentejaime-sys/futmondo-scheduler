@@ -1,0 +1,28 @@
+name: Futmondo - Railway domain setup
+
+on:
+  push:
+    paths:
+      - 'scheduler/railway-domain-test.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  domain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear o consultar dominio Railway
+        shell: bash
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          query='{"query":"query Domains($projectId: String!, $environmentId: String!, $serviceId: String!) { domains(projectId: $projectId, environmentId: $environmentId, serviceId: $serviceId) { serviceDomains { id domain } } }","variables":{"projectId":"636bc2d3-b428-4742-876a-b1a9642c84ba","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3","serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72"}}'
+          response=$(curl --fail-with-body -sS -X POST "https://backboard.railway.com/graphql/v2" -H "Authorization: Bearer $RAILWAY_API_TOKEN" -H "Content-Type: application/json" --data "$query")
+          echo "$response"
+          count=$(echo "$response" | python -c 'import json,sys; d=json.load(sys.stdin); print(len(d.get("data",{}).get("domains",{}).get("serviceDomains",[])))')
+          if [ "$count" = "0" ]; then
+            payload='{"query":"mutation Create($input: ServiceDomainCreateInput!) { serviceDomainCreate(input: $input) { id domain } }","variables":{"input":{"serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3"}}}'
+            created=$(curl --fail-with-body -sS -X POST "https://backboard.railway.com/graphql/v2" -H "Authorization: Bearer $RAILWAY_API_TOKEN" -H "Content-Type: application/json" --data "$payload")
+            echo "$created"
+          fi
