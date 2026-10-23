@@ -172,18 +172,19 @@ jobs:
           SUMMARY_PATH: ${{ runner.temp }}/futmondo-data/salida/futmondo_resumen_ULTIMO.json
         run: python scheduler/update_renew_schedule.py
 
-      - name: Guardar programacion
+      - name: Guardar estado operativo
         if: steps.clock.outputs.run == 'true' && steps.config.outputs.ready == 'true'
         shell: bash
         run: |
           date -u +"%Y-%m-%dT%H:%M:%SZ" > scheduler/heartbeat.txt
+          git checkout -- .github/workflows/renew.yml || true
           git config user.name "futmondo-scheduler"
           git config user.email "actions@users.noreply.github.com"
-          git add .github/workflows/renew.yml scheduler/next_renewal.json scheduler/heartbeat.txt
+          git add scheduler/next_renewal.json scheduler/heartbeat.txt
           if git diff --cached --quiet; then
-            echo "Sin cambios de programacion."
+            echo "Sin cambios de estado."
           else
-            git commit -m "scheduler: actualizar proxima renovacion"
+            git commit -m "scheduler: actualizar estado operativo"
             git push
           fi
 
