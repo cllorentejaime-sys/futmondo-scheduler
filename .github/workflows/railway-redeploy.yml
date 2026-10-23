@@ -28,7 +28,7 @@ jobs:
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: |
-          payload='{"query":"mutation Update($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId, environmentId: $environmentId, input: $input) }","variables":{"serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3","input":{"startCommand":"python cloud_entrypoint.py","cronSchedule":null,"restartPolicyType":"NEVER"}}}'
+          payload='{"query":"mutation Update($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId, environmentId: $environmentId, input: $input) }","variables":{"serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3","input":{"startCommand":"python cloud_entrypoint.py","cronSchedule":null,"restartPolicyType":"NEVER","sleepApplication":true}}}'
           response=$(curl --fail-with-body -sS             -X POST "https://backboard.railway.com/graphql/v2"             -H "Authorization: Bearer $RAILWAY_API_TOKEN"             -H "Content-Type: application/json"             --data "$payload")
           echo "$response"
           echo "$response" | python -c 'import json,sys; d=json.load(sys.stdin); assert not d.get("errors"), d.get("errors")'
