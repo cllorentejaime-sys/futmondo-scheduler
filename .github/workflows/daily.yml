@@ -2,6 +2,9 @@ name: Futmondo - analisis 08 y 22
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'scheduler/state-debug-trigger.txt'
   schedule:
     # GitHub cron se evalúa en UTC. Lanzamos las dos horas UTC posibles
     # de España (CET/CEST) y un guard local decide cuál corresponde hoy.
@@ -143,3 +146,10 @@ jobs:
             git commit -m "scheduler: actualizar proxima renovacion"
             git push
           fi
+
+      - name: Inventariar estado runtime
+        if: always()
+        shell: bash
+        run: |
+          echo "=== FILES ==="
+          find "$RUNNER_TEMP/futmondo-data" -maxdepth 4 -type f -printf '%P\t%s bytes\n' | sort || true
