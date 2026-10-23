@@ -1,4 +1,4 @@
-name: Futmondo - Railway redeploy
+name: Futmondo - Railway execute
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  redeploy:
+  execute:
     runs-on: ubuntu-latest
     steps:
       - name: Validar token
@@ -23,17 +23,22 @@ jobs:
             exit 1
           fi
 
-      - name: Redeploy futmondo-reader
+      - name: Configurar servicio como ejecucion bajo demanda
         shell: bash
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-          SERVICE_ID: "24bc953e-a219-48c8-a7e8-c86856adcf72"
-          ENVIRONMENT_ID: "a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3"
         run: |
-          payload=$(cat <<'JSON'
-          {"query":"mutation Redeploy($serviceId: String!, $environmentId: String!) { serviceInstanceRedeploy(serviceId: $serviceId, environmentId: $environmentId) }","variables":{"serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3"}}
-          JSON
-          )
-          response=$(curl --fail-with-body -sS             -X POST "https://backboard.railway.app/graphql/v2"             -H "Authorization: Bearer $RAILWAY_API_TOKEN"             -H "Content-Type: application/json"             --data "$payload")
+          payload='{"query":"mutation Update($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId, environmentId: $environmentId, input: $input) }","variables":{"serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3","input":{"startCommand":"python cloud_entrypoint.py","cronSchedule":null,"restartPolicyType":"NEVER"}}}'
+          response=$(curl --fail-with-body -sS             -X POST "https://backboard.railway.com/graphql/v2"             -H "Authorization: Bearer $RAILWAY_API_TOKEN"             -H "Content-Type: application/json"             --data "$payload")
           echo "$response"
-          echo "$response" | python -c 'import json,sys; d=json.load(sys.stdin); assert not d.get("errors"), d.get("errors"); assert d.get("data",{}).get("serviceInstanceRedeploy") is not None'
+          echo "$response" | python -c 'import json,sys; d=json.load(sys.stdin); assert not d.get("errors"), d.get("errors")'
+
+      - name: Ejecutar futmondo-reader ahora
+        shell: bash
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          payload='{"query":"mutation Deploy($serviceId: String!, $environmentId: String!) { serviceInstanceDeployV2(serviceId: $serviceId, environmentId: $environmentId) }","variables":{"serviceId":"24bc953e-a219-48c8-a7e8-c86856adcf72","environmentId":"a2afc06e-6c45-4cff-9b2f-e6ba5d4a4ea3"}}'
+          response=$(curl --fail-with-body -sS             -X POST "https://backboard.railway.com/graphql/v2"             -H "Authorization: Bearer $RAILWAY_API_TOKEN"             -H "Content-Type: application/json"             --data "$payload")
+          echo "$response"
+          echo "$response" | python -c 'import json,sys; d=json.load(sys.stdin); assert not d.get("errors"), d.get("errors"); assert d.get("data",{}).get("serviceInstanceDeployV2"), d'
