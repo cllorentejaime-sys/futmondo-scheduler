@@ -2,6 +2,9 @@ name: Futmondo - Railway redeploy
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'scheduler/railway-redeploy-test.txt'
 
 permissions:
   contents: read
