@@ -149,6 +149,13 @@ jobs:
           fi
 
           if [ "$rc" -ne 0 ]; then
+            mkdir -p state/debug
+            cp "$FUTMONDO_DATA_DIR/salida/futmondo_resumen_ULTIMO.json" state/debug/futmondo_resumen_REVISAR.json || true
+            git add -f state/debug/futmondo_resumen_REVISAR.json
+            if ! git diff --cached --quiet; then
+              git commit -m "debug: guardar resumen REVISAR"
+              git push
+            fi
             echo "::warning::El lector terminó con control de calidad no OK; estado persistido para la próxima ejecución."
             exit "$rc"
           fi
