@@ -34,7 +34,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519 -C "futmondo-ci-${GITHUB_RUN_ID}"
-          railway ssh keys add --key ~/.ssh/id_ed25519.pub --name "futmondo-ci-${GITHUB_RUN_ID}"\n          sleep 8
+          railway ssh keys add --key ~/.ssh/id_ed25519.pub --name "futmondo-ci-${GITHUB_RUN_ID}"
+          sleep 8
 
       - name: Descargar historial del volumen
         env:
