@@ -1,12 +1,6 @@
 {
-  "actualizado_local": "2026-10-26T15:09:45.427932+01:00",
+  "actualizado_local": "2026-10-27T01:22:55.531211+01:00",
   "bloqueos": [
-    {
-      "id": "62ee482f2f093467dc60108e",
-      "jugador": "Pablo Ibáñez",
-      "posicion": "centrocampista",
-      "vence_local": "2026-10-26T23:59:59.999000+01:00"
-    },
     {
       "id": "520243d0d7a595bd3700001f",
       "jugador": "Oblak",
@@ -33,9 +27,9 @@
     }
   ],
   "proxima_renovacion": {
-    "jugador": "Pablo Ibáñez",
-    "vence_local": "2026-10-26T23:59:59.999000+01:00",
-    "despertar_principal_local": "2026-10-26T22:59:59.999000+01:00",
-    "respaldo_local": "2026-10-26T23:39:59.999000+01:00"
+    "jugador": "Oblak",
+    "vence_local": "2026-10-29T12:08:07.471000+01:00",
+    "despertar_principal_local": "2026-10-29T11:08:07.471000+01:00",
+    "respaldo_local": "2026-10-29T11:48:07.471000+01:00"
   }
 }
