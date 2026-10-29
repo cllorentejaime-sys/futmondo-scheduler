@@ -1,35 +1,35 @@
 {
-  "actualizado_local": "2026-10-29T01:48:24.267708+01:00",
+  "actualizado_local": "2026-10-29T15:09:17.992249+01:00",
   "bloqueos": [
-    {
-      "id": "520243d0d7a595bd3700001f",
-      "jugador": "Oblak",
-      "posicion": "portero",
-      "vence_local": "2026-10-29T12:08:07.471000+01:00"
-    },
-    {
-      "id": "61122ac42806395bcad477f0",
-      "jugador": "Brugué",
-      "posicion": "delantero",
-      "vence_local": "2026-10-29T12:10:03.047000+01:00"
-    },
-    {
-      "id": "50f47dd1dbbab36d0e0042e3",
-      "jugador": "Jonny",
-      "posicion": "defensa",
-      "vence_local": "2026-10-29T14:22:26.551000+01:00"
-    },
     {
       "id": "5f36db010b759303ff680104",
       "jugador": "Iván Martín",
       "posicion": "centrocampista",
       "vence_local": "2026-11-01T16:38:15.723000+01:00"
+    },
+    {
+      "id": "520243d0d7a595bd3700001f",
+      "jugador": "Oblak",
+      "posicion": "portero",
+      "vence_local": "2026-11-05T12:08:07.471000+01:00"
+    },
+    {
+      "id": "61122ac42806395bcad477f0",
+      "jugador": "Brugué",
+      "posicion": "delantero",
+      "vence_local": "2026-11-05T12:10:03.047000+01:00"
+    },
+    {
+      "id": "50f47dd1dbbab36d0e0042e3",
+      "jugador": "Jonny",
+      "posicion": "defensa",
+      "vence_local": "2026-11-05T14:22:26.551000+01:00"
     }
   ],
   "proxima_renovacion": {
-    "jugador": "Oblak",
-    "vence_local": "2026-10-29T12:08:07.471000+01:00",
-    "despertar_principal_local": "2026-10-29T11:08:07.471000+01:00",
-    "respaldo_local": "2026-10-29T11:48:07.471000+01:00"
+    "jugador": "Iván Martín",
+    "vence_local": "2026-11-01T16:38:15.723000+01:00",
+    "despertar_principal_local": "2026-11-01T15:38:15.723000+01:00",
+    "respaldo_local": "2026-11-01T16:18:15.723000+01:00"
   }
 }
