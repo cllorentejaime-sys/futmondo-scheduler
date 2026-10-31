@@ -1,6 +1,12 @@
 {
-  "actualizado_local": "2026-10-31T01:42:17.370185+01:00",
+  "actualizado_local": "2026-10-31T14:36:30.341139+01:00",
   "bloqueos": [
+    {
+      "id": "65ad5e596519630480ca1cf7",
+      "jugador": "Cubarsí",
+      "posicion": "defensa",
+      "vence_local": "2026-10-31T23:59:59.999000+01:00"
+    },
     {
       "id": "5f36db010b759303ff680104",
       "jugador": "Iván Martín",
@@ -27,9 +33,9 @@
     }
   ],
   "proxima_renovacion": {
-    "jugador": "Iván Martín",
-    "vence_local": "2026-11-01T16:38:15.723000+01:00",
-    "despertar_principal_local": "2026-11-01T15:38:15.723000+01:00",
-    "respaldo_local": "2026-11-01T16:18:15.723000+01:00"
+    "jugador": "Cubarsí",
+    "vence_local": "2026-10-31T23:59:59.999000+01:00",
+    "despertar_principal_local": "2026-10-31T22:59:59.999000+01:00",
+    "respaldo_local": "2026-10-31T23:39:59.999000+01:00"
   }
 }
