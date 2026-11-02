@@ -1,12 +1,6 @@
 {
-  "actualizado_local": "2026-11-01T15:15:54.647245+01:00",
+  "actualizado_local": "2026-11-02T01:34:43.495042+01:00",
   "bloqueos": [
-    {
-      "id": "5f36db010b759303ff680104",
-      "jugador": "Iván Martín",
-      "posicion": "centrocampista",
-      "vence_local": "2026-11-01T16:38:15.723000+01:00"
-    },
     {
       "id": "520243d0d7a595bd3700001f",
       "jugador": "Oblak",
@@ -24,12 +18,18 @@
       "jugador": "Jonny",
       "posicion": "defensa",
       "vence_local": "2026-11-05T14:22:26.551000+01:00"
+    },
+    {
+      "id": "5f36db010b759303ff680104",
+      "jugador": "Iván Martín",
+      "posicion": "centrocampista",
+      "vence_local": "2026-11-08T16:38:15.723000+01:00"
     }
   ],
   "proxima_renovacion": {
-    "jugador": "Iván Martín",
-    "vence_local": "2026-11-01T16:38:15.723000+01:00",
-    "despertar_principal_local": "2026-11-01T15:38:15.723000+01:00",
-    "respaldo_local": "2026-11-01T16:18:15.723000+01:00"
+    "jugador": "Oblak",
+    "vence_local": "2026-11-05T12:08:07.471000+01:00",
+    "despertar_principal_local": "2026-11-05T11:08:07.471000+01:00",
+    "respaldo_local": "2026-11-05T11:48:07.471000+01:00"
   }
 }
