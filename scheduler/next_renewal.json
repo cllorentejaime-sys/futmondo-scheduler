@@ -1,5 +1,5 @@
 {
-  "actualizado_local": "2026-11-22T02:09:48.798291+01:00",
+  "actualizado_local": "2026-11-22T16:15:16.079388+01:00",
   "bloqueos": [
     {
       "id": "5f36db010b759303ff680104",
@@ -23,7 +23,7 @@
   "proxima_renovacion": {
     "jugador": "Iván Martín",
     "vence_local": "2026-11-22T16:38:15.723000+01:00",
-    "despertar_principal_local": "2026-11-22T15:38:15.723000+01:00",
+    "despertar_principal_local": "2026-11-22T16:17:00+01:00",
     "respaldo_local": "2026-11-22T16:18:15.723000+01:00"
   }
 }
